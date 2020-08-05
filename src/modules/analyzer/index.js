@@ -15,6 +15,11 @@ const start = async ({ notificationService, logger }) => {
     });
 
     const browser = await puppeteer.launch({
+        defaultViewport: {
+            deviceScaleFactor: 1,
+            height: 1080,
+            width: 1920,
+        },
         headless: true,
     });
 
@@ -32,11 +37,6 @@ const start = async ({ notificationService, logger }) => {
         );
         await page.setExtraHTTPHeaders({
             "Accept-Language": "en;q=0.9",
-        });
-        await page.setViewport({
-            deviceScaleFactor: 1,
-            height: 1080,
-            width: 1920,
         });
 
         await Promise.all([page.goto(selector.url), page.waitForNavigation()]);
@@ -80,7 +80,7 @@ const start = async ({ notificationService, logger }) => {
                 }
 
                 if (action === "type") {
-                    logger.info("Click", context);
+                    logger.info("Type", context);
                     await page.click(path, { clickCount: 3 });
                     await page.type(path, value, { delay: 100 });
                 }
@@ -93,6 +93,17 @@ const start = async ({ notificationService, logger }) => {
             selectorId: selector._id,
         });
         logger.info("Last track", { lastTrack, selector });
+
+        if (!lastTrack) {
+            logger.log(
+                `Start tracking with value ${JSON.stringify(value)}`,
+                selector
+            );
+            await notificationService.selectorValueChangeNotify({
+                newValue: value,
+                selector,
+            });
+        }
 
         if (lastTrack && lastTrack.value !== value) {
             logger.log(

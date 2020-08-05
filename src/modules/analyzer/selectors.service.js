@@ -4,7 +4,7 @@ const Track = require("./models/Track");
 class SelectorsService {
     // eslint-disable-next-line class-methods-use-this
     async getActiveSelectors() {
-        return Selector.find({ isEnabled: true });
+        return Selector.find({ isEnabled: true }).sort("-createdAt");
     }
 
     // eslint-disable-next-line class-methods-use-this

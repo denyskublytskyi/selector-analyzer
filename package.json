@@ -4,7 +4,7 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
-    "start": "node -r dotenv-safe/config --inspect ./src",
+    "start": "node -r dotenv-safe/config ./src",
     "debug": "node -r dotenv-safe/config --inspect --inspect-brk ./src",
     "lint": "eslint ./src"
   },

@@ -14,8 +14,10 @@ class TelegramNotificationService extends INotificationService {
 
     async selectorValueChangeNotify({ selector, oldValue, newValue }) {
         await this.bot.telegram.sendMessage(
-            "124169513",
-            `Selector _${selector.name}_ was changed from *${oldValue}* to *${newValue}*`,
+            process.env.TELEGRAM_CHAT_ID,
+            oldValue
+                ? `Selector _${selector.name}_ was changed from *${oldValue}* to *${newValue}*`
+                : `Started tracking new selector _${selector.name}_ with value *${newValue}*`,
             {
                 parse_mode: "markdown",
             }
