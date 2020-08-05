@@ -24,21 +24,21 @@ const start = async () => {
     });
 };
 
-start()
-    .then(() => {
-        logger.info("Job is successfully finished!");
-        // process.exit(0);
-    })
-    .catch((e) => {
-        logger.error(e, "Job failed");
-        // process.exit(1);
+module.exports.handler = async () => {
+    process.on("uncaughtException", (e) => {
+        logger.error(e, "Uncaught exception");
+        process.exit(1);
     });
 
-process.on("uncaughtException", (e) => {
-    logger.error(e, "Uncaught exception");
-    process.exit(1);
-});
+    process.on("unhandledRejection", (reason, p) => {
+        logger.error(reason, "Unhandled Rejection at Promise", p);
+    });
 
-process.on("unhandledRejection", (reason, p) => {
-    logger.error(reason, "Unhandled Rejection at Promise", p);
-});
+    try {
+        await start();
+        logger.info("Job is successfully finished!");
+    } catch (e) {
+        logger.error(e, "Job failed");
+        throw e;
+    }
+};

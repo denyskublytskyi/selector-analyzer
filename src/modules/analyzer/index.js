@@ -1,10 +1,13 @@
-const puppeteer = require("puppeteer");
 const map = require("lodash/map");
 const identity = require("lodash/identity");
 const pickBy = require("lodash/pickBy");
 const asyncEachSeries = require("async/eachSeries");
+const chromeLambda = require("chrome-aws-lambda");
+const S3Client = require("aws-sdk/clients/s3");
 
 const { SelectorsService } = require("./selectors.service");
+
+const s3 = new S3Client({ region: process.env.S3_REGION });
 
 const start = async ({ notificationService, logger }) => {
     const selectorsService = new SelectorsService();
@@ -14,24 +17,38 @@ const start = async ({ notificationService, logger }) => {
         selectors: map(selectors, "name"),
     });
 
-    const browser = await puppeteer.launch({
-        defaultViewport: {
-            deviceScaleFactor: 1,
-            height: 1080,
-            width: 1920,
-        },
-        headless: true,
-    });
-
     await asyncEachSeries(selectors, async (selector) => {
+        const opts = {
+            defaultViewport: {
+                deviceScaleFactor: 1,
+                height: 1080,
+                width: 1920,
+            },
+            headless: true,
+        };
+
+        let browser;
+
+        if (process.env.NODE_ENV === "development") {
+            // eslint-disable-next-line global-require,import/no-extraneous-dependencies
+            const puppeteer = await require("puppeteer");
+            browser = await puppeteer.launch(opts);
+        } else {
+            browser = await chromeLambda.puppeteer.launch({
+                args: chromeLambda.args,
+                executablePath: await chromeLambda.executablePath,
+                ...opts,
+            });
+        }
+
         const values = [];
 
         logger.info("Start processing selector", {
             selector,
         });
 
-        const browserContext = await browser.createIncognitoBrowserContext();
-        const page = await browserContext.newPage();
+        const page = await browser.newPage();
+
         await page.setUserAgent(
             "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36"
         );
@@ -63,13 +80,34 @@ const start = async ({ notificationService, logger }) => {
                     await page.waitFor(wait);
                 }
 
+                logger.info("Making screenshot", context);
+                const buffer = await page.screenshot();
+
+                logger.info("Uploading screenshot", context);
+                const s3Response = await s3
+                    .upload({
+                        ACL: "public-read",
+                        Body: buffer,
+                        Bucket: process.env.S3_BUCKET,
+                        ContentType: "image/png",
+                        Key: `${selector.name}/${new Date().toISOString()}.png`,
+                    })
+                    .promise();
+                logger.info("Screenshot is uploaded", {
+                    ...context,
+                    s3Response,
+                });
+
                 if (action === "getValue") {
                     logger.info("Get value", context);
                     const result = await page.$eval(
                         path,
                         (element) => element.textContent
                     );
-                    values.push(result.replace(/[\t\n\r]/, "").trim());
+                    values.push({
+                        screenshotUrl: s3Response.Location,
+                        value: result.replace(/[\t\n\r]/, "").trim(),
+                    });
                 }
 
                 if (action === "click") {
@@ -87,12 +125,14 @@ const start = async ({ notificationService, logger }) => {
             }
         );
 
-        const value = values.join(" ");
+        const value = map(values, "value").join(" ");
         const lastTrack = await selectorsService.getLastTrack({
             // eslint-disable-next-line no-underscore-dangle
             selectorId: selector._id,
         });
         logger.info("Last track", { lastTrack, selector });
+
+        const screenshotsUrls = map(values, "screenshotUrl");
 
         if (!lastTrack) {
             logger.log(
@@ -101,6 +141,7 @@ const start = async ({ notificationService, logger }) => {
             );
             await notificationService.selectorValueChangeNotify({
                 newValue: value,
+                screenshotsUrls,
                 selector,
             });
         }
@@ -115,22 +156,23 @@ const start = async ({ notificationService, logger }) => {
             await notificationService.selectorValueChangeNotify({
                 newValue: value,
                 oldValue: lastTrack.value,
+                screenshotsUrls,
                 selector,
             });
         }
 
         logger.info("Saving track", { selector, value });
         await selectorsService.saveTrack({
+            screenshotsUrls,
             selector,
             value,
         });
 
         await page.close();
+        await browser.close();
 
         return values;
     });
-
-    await browser.close();
 };
 
 module.exports = { start };
