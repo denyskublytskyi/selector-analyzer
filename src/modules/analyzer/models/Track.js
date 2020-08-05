@@ -10,6 +10,7 @@ const trackSchema = mongoose.Schema(
             type: mongoose.Schema.Types.ObjectId,
             ref: "Selector",
         },
+        screenshotsUrls: [String],
     },
     {
         timestamps: true,

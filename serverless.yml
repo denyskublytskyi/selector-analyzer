@@ -1,0 +1,64 @@
+service: selectors-analyzer
+
+custom:
+  s3Bucket: selectors-analyzer-files
+
+provider:
+  name: aws
+  region: eu-central-1
+  runtime: nodejs12.x
+  stage: dev
+  memorySize: 2048
+  timeout: 600
+  layers:
+    - arn:aws:lambda:${self:provider.region}:764866452798:layer:chrome-aws-lambda:17
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - s3:PutObject
+        - s3:PutObjectAcl
+      Resource: arn:aws:s3:::${self:custom.s3Bucket}/*
+
+functions:
+  analyze:
+    handler: src/index.handler
+    events:
+      - schedule: rate(2 hours)
+    environment:
+      MONGO_URI:
+      TELEGRAM_BOT_TOKEN:
+      TELEGRAM_CHAT_ID: 124169513
+      S3_REGION: ${self:provider.region}
+      S3_BUCKET: ${self:custom.s3Bucket}
+
+resources:
+  Resources:
+    # Bucket where the screenshots are stored
+    screenshotsBucket:
+      Type: AWS::S3::Bucket
+      DeletionPolicy: Delete
+      Properties:
+        BucketName: ${self:custom.s3Bucket}
+        AccessControl: Private
+        LifecycleConfiguration:
+          Rules:
+            - ExpirationInDays: 1
+              Prefix: '/'
+              Status: Enabled
+    # Grant public read-only access to the bucket
+    screenshotsBucketPolicy:
+      Type: AWS::S3::BucketPolicy
+      Properties:
+        PolicyDocument:
+          Statement:
+            - Effect: Allow
+              Action:
+                - s3:GetObject
+              Principal: "*"
+              Resource: arn:aws:s3:::${self:custom.s3Bucket}/*
+        Bucket:
+          Ref: screenshotsBucket
+
+package:
+  exclude:
+    - node_modules/puppeteer/**
