@@ -62,7 +62,6 @@ resources:
 package:
   exclude:
     - node_modules/puppeteer/**
-    - node_modules/serverless/**
     - .gitignore
     - .git/**
     - .env
