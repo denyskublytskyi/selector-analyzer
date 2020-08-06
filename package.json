@@ -18,6 +18,7 @@
     "lodash": "^4.17.19",
     "mongoose": "^5.9.24",
     "puppeteer-core": "4.0.1",
+    "serverless": "^1.78.1",
     "telegraf": "^3.38.0"
   },
   "devDependencies": {
