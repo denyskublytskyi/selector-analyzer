@@ -13,6 +13,8 @@
     "aws-sdk": "^2.726.0",
     "chrome-aws-lambda": "^3.0.4",
     "dotenv-safe": "^8.2.0",
+    "imagemin": "^7.0.1",
+    "imagemin-pngquant": "^9.0.0",
     "lodash": "^4.17.19",
     "mongoose": "^5.9.24",
     "puppeteer-core": "4.0.1",

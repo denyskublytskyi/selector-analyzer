@@ -4,6 +4,8 @@ const pickBy = require("lodash/pickBy");
 const asyncEachSeries = require("async/eachSeries");
 const chromeLambda = require("chrome-aws-lambda");
 const S3Client = require("aws-sdk/clients/s3");
+const imagemin = require("imagemin");
+const imageminPngquant = require("imagemin-pngquant");
 
 const { SelectorsService } = require("./selectors.service");
 
@@ -80,30 +82,52 @@ const start = async ({ notificationService, logger }) => {
                     await page.waitFor(wait);
                 }
 
-                logger.info("Making screenshot", context);
-                const buffer = await page.screenshot();
-
-                logger.info("Uploading screenshot", context);
-                const s3Response = await s3
-                    .upload({
-                        ACL: "public-read",
-                        Body: buffer,
-                        Bucket: process.env.S3_BUCKET,
-                        ContentType: "image/png",
-                        Key: `${selector.name}/${new Date().toISOString()}.png`,
-                    })
-                    .promise();
-                logger.info("Screenshot is uploaded", {
-                    ...context,
-                    s3Response,
-                });
-
                 if (action === "getValue") {
+                    await page.evaluate(
+                        ({ path: selectorPath }) => {
+                            // eslint-disable-next-line no-undef
+                            const el = document.querySelector(selectorPath);
+                            el.style.border = "2px solid red";
+                            el.style.padding = "15px";
+                        },
+                        { path }
+                    );
+
+                    logger.info("Making screenshot", context);
+                    const buffer = await page.screenshot();
+
+                    const optimizedBuffer = await imagemin.buffer(buffer, {
+                        plugins: [
+                            imageminPngquant({
+                                quality: [0.6, 0.8],
+                            }),
+                        ],
+                    });
+
+                    logger.info("Uploading screenshot", context);
+                    const s3Response = await s3
+                        .upload({
+                            ACL: "public-read",
+                            Body: optimizedBuffer,
+                            Bucket: process.env.S3_BUCKET,
+                            ContentType: "image/png",
+                            Key: `${
+                                selector.name
+                            }/${new Date().toISOString()}.png`,
+                        })
+                        .promise();
+
+                    logger.info("Screenshot is uploaded", {
+                        ...context,
+                        s3Response,
+                    });
+
                     logger.info("Get value", context);
                     const result = await page.$eval(
                         path,
                         (element) => element.textContent
                     );
+
                     values.push({
                         screenshotUrl: s3Response.Location,
                         value: result.replace(/[\t\n\r]/, "").trim(),

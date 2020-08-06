@@ -23,7 +23,7 @@ functions:
   analyze:
     handler: src/index.handler
     events:
-      - schedule: rate(2 hours)
+      - schedule: rate(4 hours)
     environment:
       MONGO_URI:
       TELEGRAM_BOT_TOKEN:
