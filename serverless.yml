@@ -25,8 +25,8 @@ functions:
     events:
       - schedule: rate(4 hours)
     environment:
-      MONGO_URI:
-      TELEGRAM_BOT_TOKEN:
+      MONGO_URI: ${env:MONGO_URI}
+      TELEGRAM_BOT_TOKEN: ${env:TELEGRAM_BOT_TOKEN}
       TELEGRAM_CHAT_ID: 124169513
       S3_REGION: ${self:provider.region}
       S3_BUCKET: ${self:custom.s3Bucket}
@@ -62,3 +62,6 @@ resources:
 package:
   exclude:
     - node_modules/puppeteer/**
+    - .gitignore
+    - .git/**
+    - .env
