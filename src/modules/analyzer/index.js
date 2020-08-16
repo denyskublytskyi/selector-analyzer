@@ -8,6 +8,7 @@ const imagemin = require("imagemin");
 const imageminPngquant = require("imagemin-pngquant");
 
 const { SelectorsService } = require("./selectors.service");
+const shouldNotify = require("./lib/shouldNotify");
 
 const s3 = new S3Client({ region: process.env.S3_REGION });
 
@@ -170,7 +171,11 @@ const start = async ({ notificationService, logger }) => {
             });
         }
 
-        if (lastTrack && lastTrack.value !== value) {
+        if (
+            lastTrack &&
+            lastTrack.value !== value &&
+            shouldNotify(value, lastTrack, selector.notifyWhen)
+        ) {
             logger.log(
                 `Value changes from ${JSON.stringify(
                     lastTrack.value
