@@ -37,13 +37,11 @@ const selectorSchema = mongoose.Schema(
         },
         notifyWhen: {
             type: {
-                type: {
-                    type: String,
-                    enum: ["decrease"],
-                },
-                value: {
-                    type: Number,
-                },
+                type: String,
+                enum: ["decrease"],
+            },
+            value: {
+                type: Number,
             },
         },
     },
