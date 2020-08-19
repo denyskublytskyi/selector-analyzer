@@ -174,7 +174,7 @@ const start = async ({ notificationService, logger }) => {
         if (
             lastTrack &&
             lastTrack.value !== value &&
-            shouldNotify(value, lastTrack, selector.notifyWhen)
+            shouldNotify(value, lastTrack.value, selector.notifyWhen)
         ) {
             logger.log(
                 `Value changes from ${JSON.stringify(
