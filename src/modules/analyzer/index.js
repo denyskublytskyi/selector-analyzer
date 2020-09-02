@@ -84,6 +84,21 @@ const start = async ({ notificationService, logger }) => {
                 }
 
                 if (action === "getValue") {
+                    const valueElement = await page.$(path);
+                    if (!(await valueElement.isIntersectingViewport())) {
+                        await page.evaluate(
+                            ({ path: selectorPath }) => {
+                                // eslint-disable-next-line no-undef
+                                const el = document.querySelector(selectorPath);
+
+                                if (el) {
+                                    el.scrollIntoView();
+                                }
+                            },
+                            { path }
+                        );
+                    }
+
                     await page.evaluate(
                         ({ path: selectorPath }) => {
                             // eslint-disable-next-line no-undef
