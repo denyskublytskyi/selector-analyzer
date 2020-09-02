@@ -2,6 +2,8 @@ const { Telegraf } = require("telegraf");
 
 const { INotificationService } = require("./notification.service.interface");
 
+const escapeMarkdown = (value) => value.replace(/\*/g, "").replace(/_/g, "");
+
 class TelegramNotificationService extends INotificationService {
     static async init({ token }) {
         return new TelegramNotificationService({ token });
@@ -19,8 +21,12 @@ class TelegramNotificationService extends INotificationService {
         screenshotsUrls,
     }) {
         const message = oldValue
-            ? `Selector _${selector.name}_ was changed from *${oldValue}* to *${newValue}*`
-            : `Started tracking new selector _${selector.name}_ with value *${newValue}*`;
+            ? `Selector _${selector.name}_ was changed from *${escapeMarkdown(
+                  oldValue
+              )}* to *${escapeMarkdown(newValue)}*`
+            : `Started tracking new selector _${
+                  selector.name
+              }_ with value *${escapeMarkdown(newValue)}*`;
 
         if (screenshotsUrls && screenshotsUrls.length === 1) {
             await this.bot.telegram.sendPhoto(
