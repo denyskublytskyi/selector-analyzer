@@ -27,7 +27,7 @@ const start = async ({ notificationService, logger }) => {
                 height: 1080,
                 width: 1920,
             },
-            headless: true,
+            headless: process.env.NODE_ENV !== "development",
         };
 
         let browser;
@@ -92,7 +92,7 @@ const start = async ({ notificationService, logger }) => {
                                 const el = document.querySelector(selectorPath);
 
                                 if (el) {
-                                    el.scrollIntoView();
+                                    el.scrollIntoView({ block: "center" });
                                 }
                             },
                             { path }
