@@ -44,19 +44,6 @@ resources:
           Rules:
             - ExpirationInDays: 1
               Status: Enabled
-    # Grant public read-only access to the bucket
-    screenshotsBucketPolicy:
-      Type: AWS::S3::BucketPolicy
-      Properties:
-        PolicyDocument:
-          Statement:
-            - Effect: Allow
-              Action:
-                - s3:GetObject
-              Principal: "*"
-              Resource: arn:aws:s3:::${self:custom.s3Bucket}/*
-        Bucket:
-          Ref: screenshotsBucket
 
 package:
   exclude:
