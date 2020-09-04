@@ -153,6 +153,7 @@ const start = async ({ notificationService, logger }) => {
                         values.push({
                             screenshotUrl: s3.getSignedUrl("getObject", {
                                 Bucket: process.env.S3_BUCKET,
+                                Expires: 3600,
                                 Key: s3Response.Key,
                             }),
                             value: result.replace(/[\t\n\r]/, "").trim(),
@@ -188,6 +189,11 @@ const start = async ({ notificationService, logger }) => {
                     `Start tracking with value ${JSON.stringify(value)}`,
                     selector
                 );
+                logger.log("Sending notification", {
+                    newValue: value,
+                    screenshotsUrls,
+                    selector,
+                });
                 await notificationService.selectorValueChangeNotify({
                     newValue: value,
                     screenshotsUrls,
@@ -206,6 +212,12 @@ const start = async ({ notificationService, logger }) => {
                     )} to ${JSON.stringify(value)}`,
                     selector
                 );
+                logger.log("Sending notification", {
+                    newValue: value,
+                    oldValue: lastTrack.value,
+                    screenshotsUrls,
+                    selector,
+                });
                 await notificationService.selectorValueChangeNotify({
                     newValue: value,
                     oldValue: lastTrack.value,
