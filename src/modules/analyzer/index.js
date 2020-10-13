@@ -21,6 +21,8 @@ const start = async ({ notificationService, logger }) => {
     });
 
     await asyncEachSeries(selectors, async (selector) => {
+        let page;
+        let browser;
         try {
             const opts = {
                 defaultViewport: {
@@ -30,8 +32,6 @@ const start = async ({ notificationService, logger }) => {
                 },
                 headless: process.env.NODE_ENV !== "development",
             };
-
-            let browser;
 
             if (process.env.NODE_ENV === "development") {
                 // eslint-disable-next-line global-require,import/no-extraneous-dependencies
@@ -51,7 +51,7 @@ const start = async ({ notificationService, logger }) => {
                 selector,
             });
 
-            const page = await browser.newPage();
+            page = await browser.newPage();
 
             await page.setUserAgent(
                 "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36"
@@ -232,11 +232,15 @@ const start = async ({ notificationService, logger }) => {
                 selector,
                 value,
             });
-
-            await page.close();
-            await browser.close();
         } catch (e) {
             logger.error(e.message, { selector });
+        } finally {
+            if (page) {
+                await page.close();
+            }
+            if (browser) {
+                await browser.close();
+            }
         }
     });
 };

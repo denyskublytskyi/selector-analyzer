@@ -8,7 +8,8 @@
     "debug": "node -r dotenv-safe/config --inspect --inspect-brk -e 'require(\"./src/index.js\").handler()'",
     "lint": "eslint ./src",
     "test": "jest",
-    "deploy": "env $(cat .env | xargs) && serverless -v deploy"
+    "deploy": "env $(cat .env | xargs) && serverless -v deploy",
+    "create-selector": "node -r \"dotenv-safe/config\" -e 'require(\"./createSelector\")()'"
   },
   "dependencies": {
     "async": "^3.2.0",
