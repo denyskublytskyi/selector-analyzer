@@ -11,15 +11,14 @@ const createSelector = async () => {
     console.log("Start creating");
     await Selector.create({
         isEnabled: true,
-        name: "Elmag Духовой шкаф Pyramida F 100 S GBL",
+        name: "KingCamp стол на Amazon",
         selectors: [
             {
                 action: "getValue",
-                path:
-                    "#middle_box > div > div.content.part > div > div > div.contentView.assortment_main > div.productDescription > div > div > div.productItemBid.na > div.bh_out > div",
+                path: "#availability > span",
             },
         ],
-        url: "https://elmag.com.ua/product/pyramida-f-100-s-gbl-p87870",
+        url: "https://www.amazon.com/dp/B08JP7DQMH",
     });
     console.log("Created");
     process.exit(0);
