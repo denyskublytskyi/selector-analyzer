@@ -16,9 +16,12 @@ const start = async ({ notificationService, logger }) => {
     const selectorsService = new SelectorsService();
     const selectors = await selectorsService.getActiveSelectors();
 
-    logger.info("Active selectors", {
-        selectors: map(selectors, "name"),
-    });
+    logger.info(
+        {
+            selectors: map(selectors, "name"),
+        },
+        "Active selectors"
+    );
 
     await asyncEachSeries(selectors, async (selector) => {
         let page;
@@ -47,9 +50,12 @@ const start = async ({ notificationService, logger }) => {
 
             const values = [];
 
-            logger.info("Start processing selector", {
-                selector,
-            });
+            logger.info(
+                {
+                    selector,
+                },
+                "Start processing selector"
+            );
 
             page = await browser.newPage();
 
@@ -78,12 +84,12 @@ const start = async ({ notificationService, logger }) => {
                         },
                         identity
                     );
-                    logger.info("Waiting for selector path", context);
+                    logger.info(context, "Waiting for selector path");
                     // await page.screenshot({ path: `${selector.name}-${path}.png` });
                     await page.waitForSelector(path);
 
                     if (wait) {
-                        logger.info("Waiting", context);
+                        logger.info(context, "Waiting");
                         await page.waitFor(wait);
                     }
 
@@ -115,7 +121,7 @@ const start = async ({ notificationService, logger }) => {
                             { path }
                         );
 
-                        logger.info("Making screenshot", context);
+                        logger.info(context, "Making screenshot");
                         const buffer = await page.screenshot();
 
                         const optimizedBuffer = await imagemin.buffer(buffer, {
@@ -126,7 +132,7 @@ const start = async ({ notificationService, logger }) => {
                             ],
                         });
 
-                        logger.info("Uploading screenshot", context);
+                        logger.info(context, "Uploading screenshot");
                         const s3Response = await s3
                             .upload({
                                 ACL: "private",
@@ -139,12 +145,15 @@ const start = async ({ notificationService, logger }) => {
                             })
                             .promise();
 
-                        logger.info("Screenshot is uploaded", {
-                            ...context,
-                            s3Response,
-                        });
+                        logger.info(
+                            {
+                                ...context,
+                                s3Response,
+                            },
+                            "Screenshot is uploaded"
+                        );
 
-                        logger.info("Get value", context);
+                        logger.info(context, "Get value");
                         const result = await page.$eval(
                             path,
                             (element) => element.textContent
@@ -161,14 +170,14 @@ const start = async ({ notificationService, logger }) => {
                     }
 
                     if (action === "click") {
-                        logger.info("Click", context);
+                        logger.info(context, "Click");
                         await page.click(path);
 
                         return;
                     }
 
                     if (action === "type") {
-                        logger.info("Type", context);
+                        logger.info(context, "Type");
                         await page.click(path, { clickCount: 3 });
                         await page.type(path, value, { delay: 100 });
                     }
@@ -180,20 +189,23 @@ const start = async ({ notificationService, logger }) => {
                 // eslint-disable-next-line no-underscore-dangle
                 selectorId: selector._id,
             });
-            logger.info("Last track", { lastTrack, selector });
+            logger.info({ lastTrack, selector }, "Last track");
 
             const screenshotsUrls = map(values, "screenshotUrl");
 
             if (!lastTrack) {
                 logger.log(
-                    `Start tracking with value ${JSON.stringify(value)}`,
-                    selector
-                );
-                logger.log("Sending notification", {
-                    newValue: value,
-                    screenshotsUrls,
                     selector,
-                });
+                    `Start tracking with value ${JSON.stringify(value)}`
+                );
+                logger.log(
+                    {
+                        newValue: value,
+                        screenshotsUrls,
+                        selector,
+                    },
+                    "Sending notification"
+                );
                 await notificationService.selectorValueChangeNotify({
                     newValue: value,
                     screenshotsUrls,
@@ -212,12 +224,15 @@ const start = async ({ notificationService, logger }) => {
                     )} to ${JSON.stringify(value)}`,
                     selector
                 );
-                logger.log("Sending notification", {
-                    newValue: value,
-                    oldValue: lastTrack.value,
-                    screenshotsUrls,
-                    selector,
-                });
+                logger.log(
+                    {
+                        newValue: value,
+                        oldValue: lastTrack.value,
+                        screenshotsUrls,
+                        selector,
+                    },
+                    "Sending notification"
+                );
                 await notificationService.selectorValueChangeNotify({
                     newValue: value,
                     oldValue: lastTrack.value,
@@ -226,14 +241,14 @@ const start = async ({ notificationService, logger }) => {
                 });
             }
 
-            logger.info("Saving track", { selector, value });
+            logger.info({ selector, value }, "Saving track");
             await selectorsService.saveTrack({
                 screenshotsUrls,
                 selector,
                 value,
             });
         } catch (e) {
-            logger.error(e.message, { selector });
+            logger.error({ selector }, e.message);
         } finally {
             if (page) {
                 await page.close();
