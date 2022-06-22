@@ -12,7 +12,7 @@
     "create-selector": "node -r \"dotenv-safe/config\" -e 'require(\"./createSelector\")()'"
   },
   "dependencies": {
-    "async": "^3.2.0",
+    "async": "^3.2.2",
     "aws-sdk": "^2.726.0",
     "chrome-aws-lambda": "^3.0.4",
     "dotenv-safe": "^8.2.0",
